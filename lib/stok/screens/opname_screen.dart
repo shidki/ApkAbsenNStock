@@ -7,6 +7,7 @@ import '../../api.dart';
 import '../../auth.dart';
 import '../../config.dart';
 import '../models.dart';
+import '../panduan.dart';
 import '../ui.dart';
 import 'mutasi_common.dart';
 
@@ -89,7 +90,8 @@ class _OpnameScreenState extends State<OpnameScreen> {
             )
           : null,
       body: Column(children: [
-        const ModernHeader(title: 'Stock Opname', subtitle: 'Koreksi stok sesuai fisik'),
+        const ModernHeader(title: 'Stock Opname', subtitle: 'Koreksi stok sesuai fisik',
+            trailing: PanduanButton(PanduanTopic.opname)),
         Expanded(
           child: _loading
               ? const Loading(label: 'Memuat…')

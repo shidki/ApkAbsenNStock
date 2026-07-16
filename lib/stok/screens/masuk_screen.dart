@@ -7,6 +7,7 @@ import '../../api.dart';
 import '../../auth.dart';
 import '../../config.dart';
 import '../models.dart';
+import '../panduan.dart';
 import '../ui.dart';
 import 'mutasi_common.dart';
 
@@ -89,7 +90,8 @@ class _MasukScreenState extends State<MasukScreen> {
             )
           : null,
       body: Column(children: [
-        const ModernHeader(title: 'Barang Masuk', subtitle: 'Pemasukan / penerimaan stok'),
+        const ModernHeader(title: 'Barang Masuk', subtitle: 'Pemasukan / penerimaan stok',
+            trailing: PanduanButton(PanduanTopic.masuk)),
         Expanded(
           child: _loading
               ? const Loading(label: 'Memuat…')

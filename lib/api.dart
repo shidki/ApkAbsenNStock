@@ -72,8 +72,9 @@ class Api {
 
   // ── ABSEN ──
   Future<AbsenMe> absenMe() async => AbsenMe.fromJson(await _get(_b, '/me') as Map<String, dynamic>);
-  Future<ClockResult> clock(String kode) async =>
-      ClockResult.fromJson(await _post(_b, '/clock', {'kode': kode}) as Map<String, dynamic>);
+  Future<ClockResult> clock(String kode, {int? shiftId}) async =>
+      ClockResult.fromJson(await _post(_b, '/clock',
+          {'kode': kode, 'shift_id': ?shiftId}) as Map<String, dynamic>);
 
   // ── RIWAYAT & DASHBOARD ──
   Future<List<Attendance>> myHistory({int? tahun, int? bulan}) async {

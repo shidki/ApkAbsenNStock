@@ -1,7 +1,7 @@
 {
-  "version": "1.0.4",
-  "build": 5,
+  "version": "1.0.6",
+  "build": 7,
   "url": "https://myandromeda.store/apkabsensi/apkabsensi.apk",
-  "notes": "Perbaikan sistem update otomatis — sekarang update bisa langsung dari dalam aplikasi tanpa install ulang manual.",
+  "notes": "Tambah tombol Panduan (ikon buku) di tiap menu Stok.\nKetuk buku di kanan atas untuk lihat cara pakai menu itu.",
   "mandatory": false
 }

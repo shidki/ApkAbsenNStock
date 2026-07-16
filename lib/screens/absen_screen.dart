@@ -15,6 +15,7 @@ class _AbsenScreenState extends State<AbsenScreen> {
   AbsenMe? _me;
   bool _loading = true;
   String? _err;
+  int? _shiftId; // shift yang dipilih untuk clock-in
 
   @override
   void initState() {
@@ -26,15 +27,15 @@ class _AbsenScreenState extends State<AbsenScreen> {
     setState(() { _loading = true; _err = null; });
     try {
       final m = await api.absenMe();
-      if (mounted) setState(() { _me = m; _loading = false; });
+      if (mounted) setState(() { _me = m; _loading = false; _shiftId = null; });
     } catch (e) {
       if (mounted) setState(() { _err = e.toString(); _loading = false; });
     }
   }
 
-  Future<void> _scan() async {
+  Future<void> _scan({int? shiftId}) async {
     final result = await Navigator.push<ClockResult>(
-      context, MaterialPageRoute(builder: (_) => const _ScannerPage()),
+      context, MaterialPageRoute(builder: (_) => _ScannerPage(shiftId: shiftId)),
     );
     if (result != null && mounted) {
       await _showResult(result);
@@ -51,8 +52,9 @@ class _AbsenScreenState extends State<AbsenScreen> {
         : r.action == 'pulang'
             ? 'Clock Out Berhasil'
             : 'Sudah Lengkap';
+    final shiftTag = r.shift != null && r.shift!.isNotEmpty ? 'Shift ${r.shift} · ' : '';
     final meta = r.action == 'masuk'
-        ? 'Jam ${r.jam}${r.menitTelat > 0 ? ' · telat ${r.menitTelat} menit' : ' · tepat waktu'}'
+        ? '$shiftTag Jam ${r.jam}${r.menitTelat > 0 ? ' · telat ${r.menitTelat} menit' : ' · tepat waktu'}'
         : r.action == 'pulang'
             ? 'Jam ${r.jam} · kerja ${fmtDurasi(r.durasiMenit)}${r.menitPulangCepat > 0 ? ' · pulang cepat ${r.menitPulangCepat}m' : ''}'
             : r.message;
@@ -142,6 +144,7 @@ class _AbsenScreenState extends State<AbsenScreen> {
     final m = _me!;
     final next = m.berikutnya;
     final done = next == 'selesai';
+    final needShift = next == 'masuk' && m.shiftWajib && m.shifts.isNotEmpty;
     final label = next == 'pulang' ? 'Scan QR — Clock Out' : 'Scan QR — Clock In';
     return RefreshIndicator(
       onRefresh: _load,
@@ -176,8 +179,28 @@ class _AbsenScreenState extends State<AbsenScreen> {
                 const Text('Sampai jumpa besok! 🎉', style: TextStyle(color: AppTheme.muted, fontSize: 13)),
               ]),
             )
-          else
-            _ScanButton(label: label, onTap: _scan),
+          else ...[
+            if (needShift) ...[
+              const Text('Pilih shift kamu hari ini', textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.ink, fontSize: 14)),
+              const SizedBox(height: 12),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 10, runSpacing: 10,
+                children: m.shifts.map((s) => _ShiftChip(
+                  shift: s,
+                  selected: _shiftId == s.id,
+                  onTap: () => setState(() => _shiftId = s.id),
+                )).toList(),
+              ),
+              const SizedBox(height: 20),
+            ],
+            _ScanButton(
+              label: needShift && _shiftId == null ? 'Pilih shift dulu' : label,
+              enabled: !(needShift && _shiftId == null),
+              onTap: () => _scan(shiftId: next == 'masuk' ? _shiftId : null),
+            ),
+          ],
           const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.all(14),
@@ -254,33 +277,69 @@ class _PulseBadgeState extends State<_PulseBadge> with SingleTickerProviderState
   }
 }
 
+/// Chip pemilih shift (Pagi/Siang/Sore) di layar clock-in.
+class _ShiftChip extends StatelessWidget {
+  final Shift shift;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ShiftChip({required this.shift, required this.selected, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppTheme.primary.withValues(alpha: 0.14) : AppTheme.soft,
+      borderRadius: BorderRadius.circular(AppTheme.rMd),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.rMd),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTheme.rMd),
+            border: Border.all(color: selected ? AppTheme.primary : AppTheme.border, width: selected ? 2 : 1),
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(shift.nama, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15,
+                color: selected ? AppTheme.primary : AppTheme.ink)),
+            const SizedBox(height: 2),
+            Text('${shift.jamMasuk}–${shift.jamPulang}', style: const TextStyle(color: AppTheme.muted, fontSize: 12)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
 /// Tombol scan besar bergradien dengan glow.
 class _ScanButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
-  const _ScanButton({required this.label, required this.onTap});
+  final bool enabled;
+  const _ScanButton({required this.label, required this.onTap, this.enabled = true});
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 58,
-      decoration: BoxDecoration(
-        gradient: AppTheme.brandGradient,
-        borderRadius: BorderRadius.circular(AppTheme.rSm),
-        boxShadow: AppTheme.glow(AppTheme.primary),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
+    return Opacity(
+      opacity: enabled ? 1 : 0.5,
+      child: Container(
+        height: 58,
+        decoration: BoxDecoration(
+          gradient: AppTheme.brandGradient,
           borderRadius: BorderRadius.circular(AppTheme.rSm),
-          child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 22),
-                const SizedBox(width: 10),
-                Text(label, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
-              ],
+          boxShadow: enabled ? AppTheme.glow(AppTheme.primary) : null,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: enabled ? onTap : null,
+            borderRadius: BorderRadius.circular(AppTheme.rSm),
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 22),
+                  const SizedBox(width: 10),
+                  Text(label, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
+                ],
+              ),
             ),
           ),
         ),
@@ -291,7 +350,8 @@ class _ScanButton extends StatelessWidget {
 
 // ── Halaman scanner kamera (qr_code_dart_scan — decode QR murni Dart, tanpa MLKit) ──
 class _ScannerPage extends StatefulWidget {
-  const _ScannerPage();
+  final int? shiftId;
+  const _ScannerPage({this.shiftId});
   @override
   State<_ScannerPage> createState() => _ScannerPageState();
 }
@@ -305,7 +365,7 @@ class _ScannerPageState extends State<_ScannerPage> {
     if (raw.isEmpty) return;
     setState(() => _busy = true);
     try {
-      final res = await api.clock(extractKode(raw));
+      final res = await api.clock(extractKode(raw), shiftId: widget.shiftId);
       if (mounted) Navigator.pop(context, res);
     } catch (e) {
       if (mounted) {

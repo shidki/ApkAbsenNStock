@@ -7,6 +7,7 @@ import '../../api.dart';
 import '../../auth.dart';
 import '../../config.dart';
 import '../models.dart';
+import '../panduan.dart';
 import '../ui.dart';
 import 'mutasi_common.dart';
 
@@ -89,7 +90,8 @@ class _TransferScreenState extends State<TransferScreen> {
             )
           : null,
       body: Column(children: [
-        const ModernHeader(title: 'Pindah Gudang', subtitle: 'Transfer stok antar gudang'),
+        const ModernHeader(title: 'Pindah Gudang', subtitle: 'Transfer stok antar gudang',
+            trailing: PanduanButton(PanduanTopic.transfer)),
         Expanded(
           child: _loading
               ? const Loading(label: 'Memuat…')

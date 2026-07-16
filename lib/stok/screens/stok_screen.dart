@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../api.dart';
 import '../../config.dart';
 import '../models.dart';
+import '../panduan.dart';
 import '../ui.dart';
 
 class StokScreen extends StatefulWidget {
@@ -79,11 +80,14 @@ class _StokScreenState extends State<StokScreen> {
         ModernHeader(
           title: 'Stok Produk',
           subtitle: 'Perhitungan & kartu stok',
-          trailing: IconButton(
-            onPressed: _load,
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-            tooltip: 'Muat ulang',
-          ),
+          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+            const PanduanButton(PanduanTopic.stok),
+            IconButton(
+              onPressed: _load,
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              tooltip: 'Muat ulang',
+            ),
+          ]),
         ),
         Expanded(
           child: _loading

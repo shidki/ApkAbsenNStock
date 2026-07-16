@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../auth.dart';
 import '../../config.dart';
+import '../panduan.dart';
 import '../ui.dart';
 import 'stok_screen.dart';
 import 'masuk_screen.dart';
@@ -84,7 +85,8 @@ class _AkunScreen extends StatelessWidget {
     ];
     return Scaffold(
       body: Column(children: [
-        const ModernHeader(title: 'Akun', subtitle: 'Profil & keluar'),
+        const ModernHeader(title: 'Akun', subtitle: 'Profil & keluar',
+            trailing: PanduanButton(PanduanTopic.akun)),
         Expanded(
           child: ListView(padding: EdgeInsets.fromLTRB(16, 16, 16, listBottomInset(context)), children: [
             SoftCard(

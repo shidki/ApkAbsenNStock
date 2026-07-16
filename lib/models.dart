@@ -23,6 +23,25 @@ class AppUser {
 }
 
 /// Info karyawan yang login + status hari ini (GET /absensi/me).
+/// Shift kerja (Pagi/Siang/Sore). Dipilih karyawan saat clock-in.
+class Shift {
+  final int id;
+  final String nama;
+  final String jamMasuk;
+  final String jamPulang;
+  final int toleransiMenit;
+  final int urutan;
+  final bool aktif;
+  Shift({required this.id, required this.nama, this.jamMasuk = '', this.jamPulang = '',
+    this.toleransiMenit = 0, this.urutan = 0, this.aktif = true});
+  factory Shift.fromJson(Map<String, dynamic> j) => Shift(
+        id: _asInt(j['id']), nama: j['nama']?.toString() ?? '',
+        jamMasuk: j['jam_masuk']?.toString() ?? '', jamPulang: j['jam_pulang']?.toString() ?? '',
+        toleransiMenit: _asInt(j['toleransi_menit']), urutan: _asInt(j['urutan']),
+        aktif: j['aktif'] != false,
+      );
+}
+
 class AbsenMe {
   final bool linked;
   final String? nama;
@@ -31,12 +50,19 @@ class AbsenMe {
   final String berikutnya; // masuk | pulang | selesai
   final String? jamMasuk;
   final String? jamPulang;
-  AbsenMe({required this.linked, this.nama, this.kode, this.jabatan, this.berikutnya = 'masuk', this.jamMasuk, this.jamPulang});
+  final bool shiftWajib;
+  final int? shiftId;
+  final List<Shift> shifts;
+  AbsenMe({required this.linked, this.nama, this.kode, this.jabatan, this.berikutnya = 'masuk',
+    this.jamMasuk, this.jamPulang, this.shiftWajib = false, this.shiftId, this.shifts = const []});
   factory AbsenMe.fromJson(Map<String, dynamic> j) => AbsenMe(
         linked: j['linked'] == true,
         nama: _asStr(j['nama']), kode: _asStr(j['kode']), jabatan: _asStr(j['jabatan']),
         berikutnya: j['berikutnya']?.toString() ?? 'masuk',
         jamMasuk: _asStr(j['jam_masuk']), jamPulang: _asStr(j['jam_pulang']),
+        shiftWajib: j['shift_wajib'] == true,
+        shiftId: j['shift_id'] == null ? null : _asInt(j['shift_id']),
+        shifts: ((j['shifts'] as List?) ?? []).map((e) => Shift.fromJson(e as Map<String, dynamic>)).toList(),
       );
 }
 
@@ -46,15 +72,17 @@ class ClockResult {
   final String karyawan;
   final String jam;
   final String status;
+  final String? shift;
   final int menitTelat;
   final int menitPulangCepat;
   final int durasiMenit;
   final String message;
   ClockResult({required this.action, required this.karyawan, required this.jam, required this.status,
-    this.menitTelat = 0, this.menitPulangCepat = 0, this.durasiMenit = 0, this.message = ''});
+    this.shift, this.menitTelat = 0, this.menitPulangCepat = 0, this.durasiMenit = 0, this.message = ''});
   factory ClockResult.fromJson(Map<String, dynamic> j) => ClockResult(
         action: j['action']?.toString() ?? '', karyawan: j['karyawan']?.toString() ?? '',
         jam: j['jam']?.toString() ?? '', status: j['status']?.toString() ?? '',
+        shift: _asStr(j['shift']),
         menitTelat: _asInt(j['menit_telat']), menitPulangCepat: _asInt(j['menit_pulang_cepat']),
         durasiMenit: _asInt(j['durasi_menit']), message: j['message']?.toString() ?? '',
       );
@@ -63,6 +91,7 @@ class ClockResult {
 class Attendance {
   final int id;
   final String tanggal;
+  final String? shift;
   final String? jamMasuk;
   final String? jamPulang;
   final String status; // hadir|terlambat|izin|sakit|cuti|alpha|libur
@@ -70,10 +99,11 @@ class Attendance {
   final int menitPulangCepat;
   final int durasiMenit;
   final String? source;
-  Attendance({required this.id, required this.tanggal, this.jamMasuk, this.jamPulang, this.status = 'hadir',
+  Attendance({required this.id, required this.tanggal, this.shift, this.jamMasuk, this.jamPulang, this.status = 'hadir',
     this.menitTelat = 0, this.menitPulangCepat = 0, this.durasiMenit = 0, this.source});
   factory Attendance.fromJson(Map<String, dynamic> j) => Attendance(
         id: _asInt(j['id']), tanggal: j['tanggal']?.toString() ?? '',
+        shift: _asStr(j['shift']),
         jamMasuk: _asStr(j['jam_masuk']), jamPulang: _asStr(j['jam_pulang']),
         status: j['status']?.toString() ?? 'hadir', menitTelat: _asInt(j['menit_telat']),
         menitPulangCepat: _asInt(j['menit_pulang_cepat']), durasiMenit: _asInt(j['durasi_menit']),
