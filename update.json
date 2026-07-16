@@ -1,0 +1,7 @@
+{
+  "version": "1.0.4",
+  "build": 5,
+  "url": "https://myandromeda.store/apkabsensi/apkabsensi.apk",
+  "notes": "Perbaikan sistem update otomatis — sekarang update bisa langsung dari dalam aplikasi tanpa install ulang manual.",
+  "mandatory": false
+}
